@@ -4,6 +4,7 @@ const line = require('@line/bot-sdk');
 const config = require('./config');
 const { loadStoreSettings, findStore } = require('./sheets');
 const { generateReply } = require('./ai');
+const { getConversation, addMessage, setLastStore } = require('./conversation');
 
 const app = express();
 
@@ -20,7 +21,7 @@ app.get('/', (req, res) => {
   res.json({
     status: 'running',
     service: 'ONE桌遊 LINE Bot',
-    version: '1.0.0',
+    version: '1.0.1',
     timestamp: new Date().toISOString(),
   });
 });
@@ -62,17 +63,37 @@ async function handleEvent(event) {
     // 載入店家設定
     const settings = await loadStoreSettings();
     
-    // 偵測店家（直接用訊息內容搜尋）
-    const storeInfo = findStore(settings, userMessage);
-
-    if (!storeInfo) {
-      console.log('[Store] 未偵測到特定店家，讓 AI 自行判斷');
-    } else {
-      console.log(`[Store] 偵測到店家: ${storeInfo['店家名稱']}`);
+    // 取得對話歷史
+    const conversation = getConversation(userId);
+    
+    // 偵測店家（從訊息或對話記憶中）
+    let storeInfo = findStore(settings, userMessage);
+    
+    // 如果訊息中沒找到，檢查對話記憶
+    if (!storeInfo && conversation.lastStore) {
+      storeInfo = settings.stores.find(s => s['店家名稱'] === conversation.lastStore);
+      console.log(`[Store] 使用對話記憶中的店家: ${conversation.lastStore}`);
     }
 
-    // 使用 AI 產生回覆（傳入完整的店家清單 + 偵測到的店家）
-    const replyText = await generateReply(userMessage, storeInfo, settings);
+    if (storeInfo) {
+      console.log(`[Store] 鎖定店家: ${storeInfo['店家名稱']}`);
+      // 更新對話記憶中的店家
+      setLastStore(userId, storeInfo['店家名稱']);
+    } else {
+      console.log('[Store] 未鎖定特定店家，將列出所有店家');
+    }
+
+    // 使用 AI 產生回覆（包含對話歷史）
+    const replyText = await generateReply(
+      userMessage, 
+      storeInfo, 
+      settings, 
+      conversation.history
+    );
+
+    // 記錄對話
+    addMessage(userId, 'user', userMessage);
+    addMessage(userId, 'assistant', replyText);
 
     // 回覆訊息
     await client.replyMessage(event.replyToken, {
@@ -102,6 +123,7 @@ const PORT = config.server.port;
 app.listen(PORT, () => {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('  ONE桌遊 LINE Bot 智能客服系統');
+  console.log('  🧠 對話記憶功能已啟用');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log(`✅ 伺服器運行中: http://localhost:${PORT}`);
   console.log(`📡 Webhook 路徑: /webhook`);

@@ -5,12 +5,22 @@ const config = require('./config');
 /**
  * 使用 Claude AI 產生回覆
  */
-async function generateReply(userMessage, storeInfo, allSettings) {
+async function generateReply(userMessage, storeInfo, allSettings, conversationHistory = []) {
   try {
     console.log(`[AI] 處理訊息: ${userMessage.substring(0, 50)}...`);
+    console.log(`[AI] 對話歷史: ${conversationHistory.length} 條`);
 
     // 建立系統提示（包含店家資訊和所有店家清單）
     const systemPrompt = buildSystemPrompt(storeInfo, allSettings);
+
+    // 建立對話訊息（包含歷史）
+    const messages = [
+      ...conversationHistory,
+      {
+        role: 'user',
+        content: userMessage,
+      }
+    ];
 
     // 呼叫 Claude API
     const response = await axios.post(
@@ -18,12 +28,7 @@ async function generateReply(userMessage, storeInfo, allSettings) {
       {
         model: config.ai.model,
         max_tokens: config.ai.maxTokens,
-        messages: [
-          {
-            role: 'user',
-            content: userMessage,
-          }
-        ],
+        messages: messages,
         system: systemPrompt,
       },
       {
@@ -87,10 +92,34 @@ function buildSystemPrompt(storeInfo, allSettings) {
   if (isStoreDetected) {
     storeContext = `\n【🎯 當前店家】\n已鎖定店家：${storeName}\n請使用以下該店家的資訊回答問題。\n`;
   } else {
-    storeContext = `\n【🏪 店家清單】\n我們的店家：${storeList}\n\n⚠️ 用戶尚未明確指定店家，請先詢問用戶要查詢哪一家店。\n`;
+    // 列出所有店家的完整清單
+    const storeListDetailed = allStores.map((s, index) => 
+      `${index + 1}. ${s['店家名稱']} - ${s['地址']}`
+    ).join('\n');
+    
+    storeContext = `\n【🏪 店家清單】
+⚠️ 用戶尚未明確指定店家，請先列出所有店家讓用戶選擇。
+
+我們的店家（共 ${allStores.length} 家）：
+${storeListDetailed}
+
+【回覆指引】
+1. 先禮貌告知用戶：「請問您要查詢哪一家店呢？」
+2. 列出所有店家清單（編號 + 店名 + 地址）
+3. 引導用戶選擇：「請告訴我店家編號或名稱，我會為您查詢詳細資訊。」
+4. 不要編造或猜測店家資訊
+5. 不要回答任何具體價格或設備資訊（因為還不知道是哪一家）
+\n`;
   }
   
   return `你是 ONE桌遊 的 AI 客服助理。
+
+【💬 對話記憶】
+你有對話記憶功能！可以記住用戶之前說過的話。
+- 如果用戶之前提到過店家，你可以繼續使用該店家資訊回答
+- 如果用戶說「是」、「對」、「一中」等簡短回應，請結合上下文理解
+- 保持對話的連貫性和自然性
+
 ${storeContext}
 【🚫 核心鐵律 - 必須嚴格遵守】
 1. 無人店身分（最高優先）：
