@@ -1,0 +1,22 @@
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+
+# Logs
+*.log
+npm-debug.log*
+
+# Railway
+.railway/
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# Testing
+coverage/
