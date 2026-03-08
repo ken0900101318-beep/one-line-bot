@@ -92,20 +92,20 @@ function buildSystemPrompt(storeInfo, allSettings) {
   if (isStoreDetected) {
     storeContext = `\n【🎯 當前店家】\n已鎖定店家：${storeName}\n請使用以下該店家的資訊回答問題。\n`;
   } else {
-    // 列出所有店家的完整清單
-    const storeListDetailed = allStores.map((s, index) => 
-      `${index + 1}. ${s['店家名稱']} - ${s['地址']}`
+    // 列出所有店家（只顯示店名，不顯示地址）
+    const storeListSimple = allStores.map((s, index) => 
+      `${index + 1}. ${s['店家名稱']}`
     ).join('\n');
     
     storeContext = `\n【🏪 店家清單】
 ⚠️ 用戶尚未明確指定店家，請先列出所有店家讓用戶選擇。
 
 我們的店家（共 ${allStores.length} 家）：
-${storeListDetailed}
+${storeListSimple}
 
 【回覆指引】
 1. 先禮貌告知用戶：「請問您要查詢哪一家店呢？」
-2. 列出所有店家清單（編號 + 店名 + 地址）
+2. 列出所有店家清單（編號 + 店名，不要地址）
 3. 引導用戶選擇：「請告訴我店家編號或名稱，我會為您查詢詳細資訊。」
 4. 不要編造或猜測店家資訊
 5. 不要回答任何具體價格或設備資訊（因為還不知道是哪一家）
@@ -173,6 +173,11 @@ ${storeContext}
 - 密碼：訂單開始後，重新整理網頁就會看到開門密碼
 - 沒電：剛進場或續時，都請去訂單頁面按「立即開始」
 - Wifi：直接提供店家的 Wifi 密碼
+
+【📱 預約方式】
+- 統一預約網址：http://one.onegame.tw/
+- 用戶詢問「如何預約」、「怎麼訂位」時，請提供此網址
+- 網址請單獨一行顯示，方便用戶點擊
 
 【🔧 設備故障排除（自助優先）】
 1. 環境髒亂：
