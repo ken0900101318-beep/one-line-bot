@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ONE桌遊 店家設定後台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(135deg, #5EEAD4 0%, #2DD4BF 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 24px;
+            padding: 3rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        h1 {
+            text-align: center;
+            color: #14B8A6;
+            font-size: 2.5em;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #6B7280;
+            margin-bottom: 3rem;
+        }
+
+        .section {
+            margin-bottom: 2.5rem;
+            padding: 2rem;
+            background: #F9FAFB;
+            border-radius: 16px;
+            border: 2px solid #E5E7EB;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            color: #14B8A6;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #E5E7EB;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #14B8A6;
+            box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: normal;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: normal;
+        }
+
+        .price-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 3rem;
+        }
+
+        button {
+            padding: 1rem 3rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #14B8A6, #0D9488);
+            color: white;
+            box-shadow: 0 8px 20px rgba(20, 184, 166, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(20, 184, 166, 0.5);
+        }
+
+        .btn-secondary {
+            background: #F3F4F6;
+            color: #6B7280;
+        }
+
+        .btn-secondary:hover {
+            background: #E5E7EB;
+        }
+
+        .success-message {
+            display: none;
+            padding: 1rem;
+            background: #D1FAE5;
+            color: #065F46;
+            border-radius: 8px;
+            margin-top: 1rem;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .error-message {
+            display: none;
+            padding: 1rem;
+            background: #FEE2E2;
+            color: #991B1B;
+            border-radius: 8px;
+            margin-top: 1rem;
+            text-align: center;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 ONE桌遊</h1>
+        <p class="subtitle">店家設定後台 - LINE Bot 智能客服</p>
+
+        <form id="storeForm">
+            <!-- 基本資訊 -->
+            <div class="section">
+                <h2 class="section-title">🏢 基本資訊</h2>
+                
+                <div class="form-group">
+                    <label for="storeName">店家名稱 *</label>
+                    <input type="text" id="storeName" name="storeName" placeholder="例如：新北土城亞東店" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="address">地址 *</label>
+                    <input type="text" id="address" name="address" placeholder="完整地址" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">客服電話 *</label>
+                    <input type="text" id="phone" name="phone" value="0970-199296" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="serviceHours">客服時間 *</label>
+                    <input type="text" id="serviceHours" name="serviceHours" value="12:00-24:00" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="bookingUrl">預約網址</label>
+                    <input type="text" id="bookingUrl" name="bookingUrl" placeholder="https://pse.is/...">
+                </div>
+
+                <div class="form-group">
+                    <label for="googleReview">Google 評論連結</label>
+                    <input type="text" id="googleReview" name="googleReview" placeholder="https://maps.app.goo.gl/...">
+                </div>
+            </div>
+
+            <!-- 座位與價格 -->
+            <div class="section">
+                <h2 class="section-title">💰 座位與價格</h2>
+                
+                <div class="price-grid">
+                    <div class="form-group">
+                        <label for="openAreaPrice">開放區（元/小時）</label>
+                        <input type="number" id="openAreaPrice" name="openAreaPrice" placeholder="200">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="smallRoomPrice">小包廂（元/小時）</label>
+                        <input type="number" id="smallRoomPrice" name="smallRoomPrice" placeholder="250">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="largeRoomPrice">大包廂（元/小時）</label>
+                        <input type="number" id="largeRoomPrice" name="largeRoomPrice" placeholder="350">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="roomNames">包廂名稱（用逗號分隔）</label>
+                    <input type="text" id="roomNames" name="roomNames" placeholder="麻古,萬波,50,清心,迷客夏">
+                </div>
+            </div>
+
+            <!-- 退單政策 -->
+            <div class="section">
+                <h2 class="section-title">🔄 退單政策</h2>
+                
+                <div class="form-group">
+                    <label for="cancelHours">提前幾小時可取消 *</label>
+                    <input type="number" id="cancelHours" name="cancelHours" value="1" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label>退單是否扣款 *</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="cancelFee" value="否" checked>
+                            不扣款
+                        </label>
+                        <label>
+                            <input type="radio" name="cancelFee" value="是">
+                            扣 20%
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI 設定 -->
+            <div class="section">
+                <h2 class="section-title">🎨 AI 個性</h2>
+                
+                <div class="form-group">
+                    <label for="aiPersonality">選擇 AI 回話風格 *</label>
+                    <select id="aiPersonality" name="aiPersonality" required>
+                        <option value="親切鄰家風">親切鄰家風（語氣像朋友）</option>
+                        <option value="熱情小編風">熱情小編風（超級活力）</option>
+                        <option value="尊榮管家風" selected>尊榮管家風（精簡優雅）</option>
+                        <option value="呆萌吉祥物風">呆萌吉祥物風（軟萌可愛）</option>
+                        <option value="專業顧問風">專業顧問風（沉穩冷靜）</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 設備資訊 -->
+            <div class="section">
+                <h2 class="section-title">🏠 設備資訊</h2>
+                
+                <div class="form-group">
+                    <label for="wifi">Wifi 密碼 *</label>
+                    <input type="text" id="wifi" name="wifi" placeholder="88888888" required>
+                </div>
+
+                <div class="form-group">
+                    <label>設備清單</label>
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="checkbox" name="facilities" value="飲料機">
+                            飲料機
+                        </label>
+                        <label>
+                            <input type="checkbox" name="facilities" value="飲水機">
+                            飲水機
+                        </label>
+                        <label>
+                            <input type="checkbox" name="facilities" value="電視">
+                            電視
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 優惠活動 -->
+            <div class="section">
+                <h2 class="section-title">🎁 優惠活動</h2>
+                
+                <div class="form-group">
+                    <label for="currentPromo">當期活動</label>
+                    <textarea id="currentPromo" name="currentPromo" rows="3" placeholder="例如：週三會員日全場 8 折"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>優惠方案</label>
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="checkbox" name="promos" value="首購優惠">
+                            首購送 1 小時續時券
+                        </label>
+                        <label>
+                            <input type="checkbox" name="promos" value="整潔換券">
+                            整潔換券活動
+                        </label>
+                        <label>
+                            <input type="checkbox" name="promos" value="早鳥方案">
+                            早鳥方案（12:00前開始 8折）
+                        </label>
+                        <label>
+                            <input type="checkbox" name="promos" value="學生優惠">
+                            學生優惠（出示學生證 9折）
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 按鈕 -->
+            <div class="button-group">
+                <button type="button" class="btn-secondary" onclick="previewData()">預覽資料</button>
+                <button type="submit" class="btn-primary">儲存設定</button>
+            </div>
+
+            <div class="success-message" id="successMessage">
+                ✅ 設定已成功儲存！資料已同步至系統。
+            </div>
+
+            <div class="error-message" id="errorMessage">
+                ❌ 儲存失敗，請檢查網路連線或聯絡技術人員。
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // 表單提交處理
+        document.getElementById('storeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = {};
+            
+            // 收集表單資料
+            for (let [key, value] of formData.entries()) {
+                if (key === 'facilities' || key === 'promos') {
+                    data[key] = formData.getAll(key).join(', ');
+                } else {
+                    data[key] = value;
+                }
+            }
+            
+            console.log('準備送出的資料:', data);
+            
+            // 顯示成功訊息（實際應該要送到 Google Apps Script）
+            document.getElementById('successMessage').style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+            
+            // 3 秒後隱藏訊息
+            setTimeout(() => {
+                document.getElementById('successMessage').style.display = 'none';
+            }, 3000);
+            
+            // TODO: 實際部署時，這裡要串接 Google Apps Script
+            // await fetch('YOUR_GOOGLE_APPS_SCRIPT_URL', {
+            //     method: 'POST',
+            //     body: JSON.stringify(data)
+            // });
+        });
+
+        // 預覽資料
+        function previewData() {
+            const formData = new FormData(document.getElementById('storeForm'));
+            const data = {};
+            
+            for (let [key, value] of formData.entries()) {
+                if (key === 'facilities' || key === 'promos') {
+                    data[key] = formData.getAll(key).join(', ');
+                } else {
+                    data[key] = value;
+                }
+            }
+            
+            console.log('表單資料預覽:', data);
+            alert('資料已在瀏覽器 Console 顯示（按 F12 查看）');
+        }
+    </script>
+</body>
+</html>
