@@ -62,17 +62,17 @@ async function handleEvent(event) {
     // 載入店家設定
     const settings = await loadStoreSettings();
     
-    // 辨識店家（簡易版：從訊息中找店名）
-    const storeInfo = detectStore(userMessage, settings);
+    // 偵測店家（直接用訊息內容搜尋）
+    const storeInfo = findStore(settings, userMessage);
 
     if (!storeInfo) {
-      console.log('[Store] 未偵測到特定店家，使用預設設定');
+      console.log('[Store] 未偵測到特定店家，讓 AI 自行判斷');
     } else {
       console.log(`[Store] 偵測到店家: ${storeInfo['店家名稱']}`);
     }
 
-    // 使用 AI 產生回覆
-    const replyText = await generateReply(userMessage, storeInfo);
+    // 使用 AI 產生回覆（傳入完整的店家清單 + 偵測到的店家）
+    const replyText = await generateReply(userMessage, storeInfo, settings);
 
     // 回覆訊息
     await client.replyMessage(event.replyToken, {
@@ -89,32 +89,12 @@ async function handleEvent(event) {
     try {
       await client.replyMessage(event.replyToken, {
         type: 'text',
-        text: '抱歉，系統暫時無法處理您的訊息。請稍後再試或撥打客服專線：0970-199296',
+        text: '抱歉，系統暫時無法處理您的訊息。請稍後再試或撥打客服專線：0986-995673',
       });
     } catch (replyError) {
       console.error('[Reply] 錯誤回覆失敗:', replyError);
     }
   }
-}
-
-/**
- * 偵測使用者詢問的店家
- */
-function detectStore(message, settings) {
-  if (!settings || !settings.stores) return null;
-
-  // 常見店名關鍵字
-  const keywords = ['店', '亞東', '土城', '新莊', '平鎮', '中壢', '桃園', '台中'];
-  
-  for (const keyword of keywords) {
-    if (message.includes(keyword)) {
-      const store = findStore(settings, keyword);
-      if (store) return store;
-    }
-  }
-
-  // 預設回傳第一家店（或 null）
-  return settings.stores.length > 0 ? settings.stores[0] : null;
 }
 
 // 啟動伺服器

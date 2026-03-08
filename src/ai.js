@@ -5,12 +5,12 @@ const config = require('./config');
 /**
  * 使用 Claude AI 產生回覆
  */
-async function generateReply(userMessage, storeInfo) {
+async function generateReply(userMessage, storeInfo, allSettings) {
   try {
     console.log(`[AI] 處理訊息: ${userMessage.substring(0, 50)}...`);
 
-    // 建立系統提示（包含店家資訊）
-    const systemPrompt = buildSystemPrompt(storeInfo);
+    // 建立系統提示（包含店家資訊和所有店家清單）
+    const systemPrompt = buildSystemPrompt(storeInfo, allSettings);
 
     // 呼叫 Claude API
     const response = await axios.post(
@@ -42,18 +42,22 @@ async function generateReply(userMessage, storeInfo) {
 
   } catch (error) {
     console.error('[AI] 生成失敗:', error.message);
-    return getFallbackReply(storeInfo);
+    return getFallbackReply(storeInfo, allSettings);
   }
 }
 
 /**
  * 建立系統提示（包含完整的 AI 規則）
  */
-function buildSystemPrompt(storeInfo) {
+function buildSystemPrompt(storeInfo, allSettings) {
   const aiPersonality = storeInfo?.['AI個性'] || '尊榮管家風';
   const storeName = storeInfo?.['店家名稱'] || 'ONE桌遊';
-  const phone = storeInfo?.['客服電話'] || '0970-199296';
+  const phone = storeInfo?.['客服電話'] || '0986-995673';
   const serviceHours = storeInfo?.['客服時間'] || '12:00-24:00';
+  
+  // 取得所有店家清單
+  const allStores = allSettings?.stores || [];
+  const storeList = allStores.map(s => s['店家名稱']).join('、');
 
   let personalityPrompt = '';
   
@@ -76,8 +80,18 @@ function buildSystemPrompt(storeInfo) {
       personalityPrompt = '全程使用敬語（您、請、貴賓），用詞精簡優雅，避免過多 Emoji（頂多 ✨ 或 🙏），先講結論再補充細節';
   }
 
-  return `你是 ${storeName} 的 AI 客服助理。
-
+  // 判斷是否已鎖定特定店家
+  const isStoreDetected = !!storeInfo;
+  
+  let storeContext = '';
+  if (isStoreDetected) {
+    storeContext = `\n【🎯 當前店家】\n已鎖定店家：${storeName}\n請使用以下該店家的資訊回答問題。\n`;
+  } else {
+    storeContext = `\n【🏪 店家清單】\n我們的店家：${storeList}\n\n⚠️ 用戶尚未明確指定店家，請先詢問用戶要查詢哪一家店。\n`;
+  }
+  
+  return `你是 ONE桌遊 的 AI 客服助理。
+${storeContext}
 【🚫 核心鐵律 - 必須嚴格遵守】
 1. 無人店身分（最高優先）：
    - 這是「24小時無人自助桌遊店」
@@ -192,8 +206,8 @@ ${storeInfo?.['優惠方案'] ? `- ${storeInfo['優惠方案']}` : ''}
 /**
  * 取得備用回覆（AI 失敗時使用）
  */
-function getFallbackReply(storeInfo) {
-  const phone = storeInfo?.['客服電話'] || '0970-199296';
+function getFallbackReply(storeInfo, allSettings) {
+  const phone = storeInfo?.['客服電話'] || '0986-995673';
   const serviceHours = storeInfo?.['客服時間'] || '12:00-24:00';
 
   return `抱歉，系統暫時無法處理您的問題。
