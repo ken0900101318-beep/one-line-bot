@@ -1,5 +1,6 @@
 // Google Sheets 資料讀取模組
 const axios = require('axios');
+const { parse } = require('csv-parse/sync');
 const config = require('./config');
 
 // 快取設定（避免頻繁請求）
@@ -33,6 +34,12 @@ async function loadStoreSettings() {
     cacheTime = Date.now();
 
     console.log(`[Sheets] 載入完成，共 ${settings.stores.length} 家店`);
+    
+    // 列出所有店家名稱（debug）
+    settings.stores.forEach((store, index) => {
+      console.log(`[Sheets] 店家 ${index + 1}: ${store['店家名稱']}`);
+    });
+    
     return settings;
 
   } catch (error) {
@@ -50,29 +57,26 @@ async function loadStoreSettings() {
 }
 
 /**
- * 解析 CSV 資料
+ * 解析 CSV 資料（使用專業解析器）
  */
 function parseCSV(csvText) {
-  const lines = csvText.trim().split('\n');
-  const headers = lines[0].split(',');
-  
-  const stores = [];
-  
-  for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(',');
-    const store = {};
-    
-    headers.forEach((header, index) => {
-      store[header.trim()] = values[index]?.trim() || '';
+  try {
+    // 使用 csv-parse 正確解析 CSV
+    const records = parse(csvText, {
+      columns: true, // 第一列為欄位名稱
+      skip_empty_lines: true, // 跳過空白列
+      trim: true, // 去除空白
+      relax_column_count: true, // 允許欄位數量不一致
     });
-    
-    stores.push(store);
-  }
 
-  return {
-    stores,
-    lastUpdate: new Date().toISOString(),
-  };
+    return {
+      stores: records,
+      lastUpdate: new Date().toISOString(),
+    };
+  } catch (error) {
+    console.error('[Sheets] CSV 解析失敗:', error.message);
+    return getDefaultSettings();
+  }
 }
 
 /**
@@ -81,13 +85,43 @@ function parseCSV(csvText) {
 function findStore(settings, storeName) {
   if (!settings || !settings.stores) return null;
 
-  // 模糊比對店名
-  const searchName = storeName.toLowerCase().replace(/\s/g, '');
+  const searchName = storeName.toLowerCase().replace(/\s+/g, '');
   
-  return settings.stores.find(store => {
-    const name = (store['店家名稱'] || '').toLowerCase().replace(/\s/g, '');
+  // 完全匹配優先
+  let store = settings.stores.find(s => {
+    const name = (s['店家名稱'] || '').toLowerCase().replace(/\s+/g, '');
+    return name === searchName;
+  });
+
+  if (store) {
+    console.log(`[Sheets] 完全匹配: ${store['店家名稱']}`);
+    return store;
+  }
+
+  // 模糊比對（包含關係）
+  store = settings.stores.find(s => {
+    const name = (s['店家名稱'] || '').toLowerCase().replace(/\s+/g, '');
     return name.includes(searchName) || searchName.includes(name);
   });
+
+  if (store) {
+    console.log(`[Sheets] 模糊匹配: ${store['店家名稱']}`);
+    return store;
+  }
+
+  // 簡稱匹配（例如「一中」→「台中一中店」）
+  store = settings.stores.find(s => {
+    const name = (s['店家名稱'] || '').toLowerCase();
+    return name.includes(searchName);
+  });
+
+  if (store) {
+    console.log(`[Sheets] 簡稱匹配: ${store['店家名稱']}`);
+  } else {
+    console.log(`[Sheets] 找不到店家: ${storeName}`);
+  }
+
+  return store;
 }
 
 /**
@@ -97,15 +131,15 @@ function getDefaultSettings() {
   return {
     stores: [
       {
-        '店家名稱': '範例店',
+        '店家名稱': 'ONE桌遊',
         '地址': '台灣',
-        '客服電話': '0970-199296',
+        '客服電話': '0986-995673',
         '客服時間': '12:00-24:00',
         'Wifi密碼': '88888888',
         '開放區價格': '200',
         '小包廂價格': '250',
         '大包廂價格': '350',
-        '退單限制_小時': '1',
+        '退單限制_小時': '0',
         '退單扣款': '否',
         'AI個性': '尊榮管家風',
       }
