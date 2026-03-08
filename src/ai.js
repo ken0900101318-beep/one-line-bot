@@ -5,13 +5,14 @@ const config = require('./config');
 /**
  * 使用 Claude AI 產生回覆
  */
-async function generateReply(userMessage, storeInfo, allSettings, conversationHistory = []) {
+async function generateReply(userMessage, storeInfo, allSettings, conversationHistory = [], waitingForStore = false) {
   try {
     console.log(`[AI] 處理訊息: ${userMessage.substring(0, 50)}...`);
     console.log(`[AI] 對話歷史: ${conversationHistory.length} 條`);
+    console.log(`[AI] 等待選店: ${waitingForStore}`);
 
-    // 建立系統提示（包含店家資訊和所有店家清單）
-    const systemPrompt = buildSystemPrompt(storeInfo, allSettings);
+    // 建立系統提示（包含店家資訊、店家清單和狀態）
+    const systemPrompt = buildSystemPrompt(storeInfo, allSettings, waitingForStore);
 
     // 建立對話訊息（包含歷史）
     const messages = [
@@ -54,7 +55,7 @@ async function generateReply(userMessage, storeInfo, allSettings, conversationHi
 /**
  * 建立系統提示（包含完整的 AI 規則）
  */
-function buildSystemPrompt(storeInfo, allSettings) {
+function buildSystemPrompt(storeInfo, allSettings, waitingForStore = false) {
   const aiPersonality = storeInfo?.['AI個性'] || '尊榮管家風';
   const storeName = storeInfo?.['店家名稱'] || 'ONE桌遊';
   const phone = storeInfo?.['客服電話'] || '0986-995673';
@@ -97,19 +98,47 @@ function buildSystemPrompt(storeInfo, allSettings) {
       `${index + 1}. ${s['店家名稱']}`
     ).join('\n');
     
-    storeContext = `\n【🏪 店家清單】
-⚠️ 用戶尚未明確指定店家，請先列出所有店家讓用戶選擇。
+    if (waitingForStore) {
+      // 用戶之前已經被問過要查哪一家店，但沒回答，又問了新問題
+      storeContext = `\n【⚠️ 等待用戶選店】
+用戶之前已經被詢問要查哪一家店，但尚未回答，現在又提出新問題。
 
 我們的店家（共 ${allStores.length} 家）：
 ${storeListSimple}
 
 【回覆指引】
-1. 先禮貌告知用戶：「請問您要查詢哪一家店呢？」
-2. 列出所有店家清單（編號 + 店名，不要地址）
-3. 引導用戶選擇：「請告訴我店家編號或名稱，我會為您查詢詳細資訊。」
-4. 不要編造或猜測店家資訊
-5. 不要回答任何具體價格或設備資訊（因為還不知道是哪一家）
+1. **溫和提醒**：「不好意思，您還沒告訴我要查哪一家店喔！😊」
+2. **再次引導**：「請先告訴我店家名稱或編號（如：台中一中店 或 4），我才能為您查詢價格/設備資訊。」
+3. **不要重複列出店家清單**（已經列過了，不要再列一次）
+4. **禁止回答**：不要回答任何具體價格或設備資訊（還不知道是哪一家）
+
+【智能理解】
+- 「一中」= 台中一中店
+- 「新莊」= 新北新莊輔大店
+- 「土城」= 新北土城亞東店
 \n`;
+    } else {
+      // 第一次詢問，需要列出店家清單
+      storeContext = `\n【🏪 店家清單】
+⚠️ 用戶尚未明確指定店家（第一次詢問）。
+
+我們的店家（共 ${allStores.length} 家）：
+${storeListSimple}
+
+【回覆指引】
+1. **禮貌詢問**：「請問您要查詢哪一家店呢？」
+2. **列出店家清單**（編號 + 店名）
+3. **引導選擇**：「請告訴我店家編號或名稱，我會為您查詢詳細資訊。」
+4. **禁止事項**：
+   - 不要編造或猜測店家資訊
+   - 不要回答任何具體價格或設備資訊（還不知道是哪一家）
+
+【智能理解】
+- 「一中」= 台中一中店
+- 「新莊」= 新北新莊輔大店
+- 「土城」= 新北土城亞東店
+\n`;
+    }
   }
   
   return `你是 ONE桌遊 的 AI 客服助理。

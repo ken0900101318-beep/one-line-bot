@@ -4,7 +4,7 @@ const line = require('@line/bot-sdk');
 const config = require('./config');
 const { loadStoreSettings, findStore } = require('./sheets');
 const { generateReply } = require('./ai');
-const { getConversation, addMessage, setLastStore } = require('./conversation');
+const { getConversation, addMessage, setLastStore, setWaitingForStore } = require('./conversation');
 
 const app = express();
 
@@ -80,15 +80,20 @@ async function handleEvent(event) {
       // 更新對話記憶中的店家
       setLastStore(userId, storeInfo['店家名稱']);
     } else {
-      console.log('[Store] 未鎖定特定店家，將列出所有店家');
+      console.log('[Store] 未鎖定特定店家');
+      // 設定「等待選店」狀態（如果還沒設定過）
+      if (!conversation.waitingForStore) {
+        setWaitingForStore(userId, true);
+      }
     }
 
-    // 使用 AI 產生回覆（包含對話歷史）
+    // 使用 AI 產生回覆（包含對話歷史和狀態）
     const replyText = await generateReply(
       userMessage, 
       storeInfo, 
       settings, 
-      conversation.history
+      conversation.history,
+      conversation.waitingForStore
     );
 
     // 記錄對話
